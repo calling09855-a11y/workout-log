@@ -1,0 +1,122 @@
+# WorkoutLog - プロジェクトルール
+
+## プロジェクト概要
+筋トレ記録管理Webアプリ「WorkoutLog」の開発プロジェクト。
+数字を入力するだけでトレーニングを記録でき、グラフ・カレンダー・ボディチェック写真で成長を可視化する。
+
+## 技術スタック
+- **フレームワーク**: Next.js 14+ (App Router)
+- **言語**: TypeScript (strict mode)
+- **スタイリング**: Tailwind CSS
+- **UIコンポーネント**: shadcn/ui
+- **チャート**: Recharts
+- **カレンダー**: react-day-picker
+- **データベース**: Firebase Firestore
+- **認証**: Firebase Authentication (Email/Password)
+- **ストレージ**: Firebase Storage (写真用)
+- **状態管理**: React Context + useReducer (グローバル), useState (ローカル)
+- **フォーム**: React Hook Form + Zod
+- **デプロイ**: Vercel (推奨) または Firebase Hosting
+
+## ディレクトリ構造
+```
+src/
+├── app/                    # Next.js App Router
+│   ├── layout.tsx          # ルートレイアウト
+│   ├── page.tsx            # ホーム（ダッシュボード）
+│   ├── login/page.tsx      # ログイン
+│   ├── register/page.tsx   # 新規登録
+│   ├── record/page.tsx     # トレーニング記録入力
+│   ├── history/page.tsx    # 記録一覧・検索
+│   ├── graph/page.tsx      # グラフ・可視化
+│   ├── body/page.tsx       # ボディチェック写真
+│   └── settings/page.tsx   # 設定・種目管理
+├── components/
+│   ├── ui/                 # shadcn/ui コンポーネント
+│   ├── layout/
+│   │   ├── Header.tsx
+│   │   ├── BottomNav.tsx   # モバイル下部ナビ
+│   │   └── AuthGuard.tsx   # 認証ガード
+│   ├── workout/
+│   │   ├── QuickInput.tsx  # クイック入力フォーム
+│   │   ├── RecordForm.tsx  # 記録入力フォーム
+│   │   ├── RecordCard.tsx  # 記録カード表示
+│   │   └── ExerciseSelect.tsx # 種目選択ドロップダウン
+│   ├── graph/
+│   │   ├── WeightChart.tsx # 重量推移グラフ
+│   │   ├── VolumeChart.tsx # ボリューム推移
+│   │   └── BodyPartPie.tsx # 部位別円グラフ
+│   ├── calendar/
+│   │   ├── TrainingCalendar.tsx
+│   │   └── StreakCounter.tsx
+│   └── photo/
+│       ├── PhotoUpload.tsx
+│       └── PhotoTimeline.tsx
+├── lib/
+│   ├── firebase/
+│   │   ├── config.ts       # Firebase初期化
+│   │   ├── auth.ts         # 認証関連関数
+│   │   ├── firestore.ts    # Firestoreクエリ関数
+│   │   └── storage.ts      # Storage関連関数
+│   ├── types/
+│   │   └── index.ts        # 型定義
+│   ├── constants/
+│   │   └── exercises.ts    # プリセット種目データ
+│   ├── utils/
+│   │   ├── volume.ts       # ボリューム計算
+│   │   ├── date.ts         # 日付ユーティリティ
+│   │   └── format.ts       # フォーマット関数
+│   └── hooks/
+│       ├── useAuth.ts      # 認証フック
+│       ├── useWorkouts.ts  # 記録取得フック
+│       └── useExercises.ts # 種目取得フック
+└── contexts/
+    └── AuthContext.tsx      # 認証コンテキスト
+```
+
+## コーディング規約
+
+### 全般
+- すべてのファイルでTypeScriptを使用（anyは禁止）
+- コンポーネントは関数コンポーネント + アロー関数で記述
+- exportは名前付きエクスポートを基本とし、ページコンポーネントのみdefault export
+- 日本語コメントOK（ユーザーが日本語話者のため）
+- console.logはデバッグ後に必ず削除
+
+### コンポーネント
+- 1ファイル1コンポーネント
+- propsの型はコンポーネントファイル内に定義
+- useStateは最小限に、派生値はuseMemoで計算
+- イベントハンドラは `handle` プレフィックス（例: handleSave, handleDelete）
+
+### Firebase
+- Firestoreクエリは lib/firebase/firestore.ts に集約
+- コンポーネント内で直接 Firestore を呼ばない
+- エラーハンドリングは必ず try-catch で行う
+- セキュリティルールは firestore.rules に記述
+
+### スタイリング
+- Tailwind CSSのユーティリティクラスを使用
+- カスタムCSSは最小限に
+- レスポンシブ: モバイルファースト（sm: → md: → lg:）
+- カラーは Tailwind のデフォルトパレット + カスタムテーマ色
+
+### UX原則
+- 記録入力は最短3タップで完了できること
+- 数字入力フィールドは type="number" + inputmode="decimal"
+- 前回の記録をデフォルト値として表示
+- ローディング中はスケルトンUIを表示
+- エラー時はトースト通知で表示
+
+## Firestoreデータ構造
+```
+users/{userId}/
+├── profile: { displayName, email, createdAt }
+├── exercises/{exerciseId}: { name, bodyPart, isDefault, order }
+├── workouts/{workoutId}: { exerciseId, date, weightKg, reps, sets, volume, condition, memo, createdAt }
+└── photos/{photoId}: { date, imageUrl, tag, createdAt }
+```
+
+## 開発の進め方
+Phase 1 (MVP) → Phase 2 (可視化) → Phase 3 (写真) → Phase 4 (PWA) の順で開発。
+各Phaseの詳細は DEVELOPMENT_GUIDE.md を参照。
