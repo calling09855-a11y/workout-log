@@ -36,8 +36,13 @@ export default function RegisterPage() {
       await initializeExercises(user.uid)
       router.push("/")
     } catch (err: unknown) {
-      const firebaseError = err as { code?: string }
-      setError(getFirebaseErrorMessage(firebaseError.code || ""))
+      console.error("Registration error:", err)
+      const firebaseError = err as { code?: string; message?: string }
+      if (firebaseError.code) {
+        setError(getFirebaseErrorMessage(firebaseError.code))
+      } else {
+        setError(`エラー: ${firebaseError.message || String(err)}`)
+      }
     } finally {
       setIsLoading(false)
     }
