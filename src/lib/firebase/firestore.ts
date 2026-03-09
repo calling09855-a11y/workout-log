@@ -140,14 +140,7 @@ export async function getWorkouts(
   if (filters?.exerciseId) {
     constraints.push(where("exerciseId", "==", filters.exerciseId))
   }
-  if (filters?.dateFrom) {
-    constraints.push(where("date", ">=", filters.dateFrom))
-  }
-  if (filters?.dateTo) {
-    constraints.push(where("date", "<=", filters.dateTo))
-  }
 
-  constraints.push(orderBy("date", "desc"))
   constraints.push(orderBy("createdAt", "desc"))
   constraints.push(limit(pageSize))
 
@@ -158,10 +151,18 @@ export async function getWorkouts(
   const q = query(workoutsRef, ...constraints)
   const snapshot = await getDocs(q)
 
-  const workouts = snapshot.docs.map((doc) => ({
+  let workouts = snapshot.docs.map((doc) => ({
     id: doc.id,
     ...doc.data(),
   })) as WorkoutLog[]
+
+  // クライアント側で日付フィルタ
+  if (filters?.dateFrom) {
+    workouts = workouts.filter((w) => w.date >= filters.dateFrom!)
+  }
+  if (filters?.dateTo) {
+    workouts = workouts.filter((w) => w.date <= filters.dateTo!)
+  }
 
   const newLastDoc = snapshot.docs.length > 0
     ? snapshot.docs[snapshot.docs.length - 1]
@@ -180,22 +181,26 @@ export async function getAllWorkouts(
   if (filters?.exerciseId) {
     constraints.push(where("exerciseId", "==", filters.exerciseId))
   }
-  if (filters?.dateFrom) {
-    constraints.push(where("date", ">=", filters.dateFrom))
-  }
-  if (filters?.dateTo) {
-    constraints.push(where("date", "<=", filters.dateTo))
-  }
 
-  constraints.push(orderBy("date", "desc"))
+  constraints.push(orderBy("createdAt", "desc"))
 
   const q = query(workoutsRef, ...constraints)
   const snapshot = await getDocs(q)
 
-  return snapshot.docs.map((doc) => ({
+  let workouts = snapshot.docs.map((doc) => ({
     id: doc.id,
     ...doc.data(),
   })) as WorkoutLog[]
+
+  // クライアント側で日付フィルタ
+  if (filters?.dateFrom) {
+    workouts = workouts.filter((w) => w.date >= filters.dateFrom!)
+  }
+  if (filters?.dateTo) {
+    workouts = workouts.filter((w) => w.date <= filters.dateTo!)
+  }
+
+  return workouts
 }
 
 export async function updateWorkout(
@@ -231,17 +236,22 @@ export async function getWorkoutStats(
     where("exerciseId", "==", exerciseId),
   ]
 
-  if (dateFrom) constraints.push(where("date", ">=", dateFrom))
-  if (dateTo) constraints.push(where("date", "<=", dateTo))
-  constraints.push(orderBy("date", "asc"))
+  constraints.push(orderBy("createdAt", "asc"))
 
   const q = query(workoutsRef, ...constraints)
   const snapshot = await getDocs(q)
 
-  return snapshot.docs.map((doc) => ({
+  let workouts = snapshot.docs.map((doc) => ({
     id: doc.id,
     ...doc.data(),
   })) as WorkoutLog[]
+
+  // クライアント側で日付フィルタ・ソート
+  if (dateFrom) workouts = workouts.filter((w) => w.date >= dateFrom)
+  if (dateTo) workouts = workouts.filter((w) => w.date <= dateTo)
+  workouts.sort((a, b) => a.date.localeCompare(b.date))
+
+  return workouts
 }
 
 export async function getBodyPartStats(

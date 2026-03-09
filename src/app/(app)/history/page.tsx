@@ -74,15 +74,19 @@ export default function HistoryPage() {
   useEffect(() => {
     if (!user) return
     const calcPB = async () => {
-      const all = await getAllWorkouts(user.uid)
-      const maxByExercise = new Map<string, { id: string; weight: number; volume: number }>()
-      all.forEach((w) => {
-        const current = maxByExercise.get(w.exerciseId)
-        if (!current || w.weightKg > current.weight || w.volume > current.volume) {
-          maxByExercise.set(w.exerciseId, { id: w.id, weight: w.weightKg, volume: w.volume })
-        }
-      })
-      setPersonalBests(new Set(Array.from(maxByExercise.values()).map((v) => v.id)))
+      try {
+        const all = await getAllWorkouts(user.uid)
+        const maxByExercise = new Map<string, { id: string; weight: number; volume: number }>()
+        all.forEach((w) => {
+          const current = maxByExercise.get(w.exerciseId)
+          if (!current || w.weightKg > current.weight || w.volume > current.volume) {
+            maxByExercise.set(w.exerciseId, { id: w.id, weight: w.weightKg, volume: w.volume })
+          }
+        })
+        setPersonalBests(new Set(Array.from(maxByExercise.values()).map((v) => v.id)))
+      } catch {
+        // PB計算失敗は無視
+      }
     }
     calcPB()
   }, [user, records])
