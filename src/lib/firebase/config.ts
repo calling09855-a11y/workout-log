@@ -20,23 +20,25 @@ let _auth: Auth | undefined;
 let _db: Firestore | undefined;
 let _storage: FirebaseStorage | undefined;
 
-export const auth: Auth = new Proxy({} as Auth, {
-  get(_, prop) {
-    if (!_auth) _auth = getAuth(getApp());
-    return (_auth as unknown as Record<string, unknown>)[prop as string];
-  },
-});
+export function getAuthInstance(): Auth {
+  if (!_auth) _auth = getAuth(getApp());
+  return _auth;
+}
 
-export const db: Firestore = new Proxy({} as Firestore, {
-  get(_, prop) {
-    if (!_db) _db = getFirestore(getApp());
-    return (_db as unknown as Record<string, unknown>)[prop as string];
-  },
-});
+export function getDbInstance(): Firestore {
+  if (!_db) _db = getFirestore(getApp());
+  return _db;
+}
 
-export const storage: FirebaseStorage = new Proxy({} as FirebaseStorage, {
+export function getStorageInstance(): FirebaseStorage {
+  if (!_storage) _storage = getStorage(getApp());
+  return _storage;
+}
+
+// 後方互換性のためのgetter
+export const auth = new Proxy({} as Auth, {
   get(_, prop) {
-    if (!_storage) _storage = getStorage(getApp());
-    return (_storage as unknown as Record<string, unknown>)[prop as string];
+    const instance = getAuthInstance();
+    return (instance as unknown as Record<string, unknown>)[prop as string];
   },
 });

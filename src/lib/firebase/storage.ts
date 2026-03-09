@@ -4,7 +4,7 @@ import {
   getDownloadURL,
   deleteObject,
 } from "firebase/storage"
-import { storage } from "./config"
+import { getStorageInstance } from "./config"
 
 export async function uploadPhoto(
   userId: string,
@@ -14,7 +14,7 @@ export async function uploadPhoto(
   // リサイズ
   const resizedFile = await resizeImage(file, 1200)
   const fileName = `${Date.now()}_${file.name}`
-  const storageRef = ref(storage, `users/${userId}/photos/${fileName}`)
+  const storageRef = ref(getStorageInstance(), `users/${userId}/photos/${fileName}`)
 
   return new Promise((resolve, reject) => {
     const uploadTask = uploadBytesResumable(storageRef, resizedFile)
@@ -35,7 +35,7 @@ export async function uploadPhoto(
 }
 
 export async function deletePhoto(userId: string, fileName: string) {
-  const storageRef = ref(storage, `users/${userId}/photos/${fileName}`)
+  const storageRef = ref(getStorageInstance(), `users/${userId}/photos/${fileName}`)
   await deleteObject(storageRef)
 }
 

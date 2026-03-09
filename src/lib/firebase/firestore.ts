@@ -17,15 +17,19 @@ import {
   type DocumentData,
   type QueryDocumentSnapshot,
 } from "firebase/firestore"
-import { db } from "./config"
+import { getDbInstance } from "./config"
+
+function db() {
+  return getDbInstance()
+}
 import { PRESET_EXERCISES } from "@/lib/constants/exercises"
 import type { Exercise, WorkoutLog, WorkoutFormData, WorkoutFilter, BodyPhoto } from "@/lib/types"
 
 // ── 種目関連 ──
 
 export async function initializeExercises(userId: string) {
-  const batch = writeBatch(db)
-  const exercisesRef = collection(db, "users", userId, "exercises")
+  const batch = writeBatch(db())
+  const exercisesRef = collection(db(), "users", userId, "exercises")
 
   PRESET_EXERCISES.forEach((exercise, index) => {
     const docRef = doc(exercisesRef)
@@ -41,11 +45,11 @@ export async function initializeExercises(userId: string) {
 }
 
 export async function resetExercises(userId: string) {
-  const exercisesRef = collection(db, "users", userId, "exercises")
+  const exercisesRef = collection(db(), "users", userId, "exercises")
   const snapshot = await getDocs(exercisesRef)
 
   // 既存の種目を削除
-  const deleteBatch = writeBatch(db)
+  const deleteBatch = writeBatch(db())
   snapshot.docs.forEach((d) => {
     deleteBatch.delete(d.ref)
   })
@@ -56,7 +60,7 @@ export async function resetExercises(userId: string) {
 }
 
 export async function getExercises(userId: string): Promise<Exercise[]> {
-  const exercisesRef = collection(db, "users", userId, "exercises")
+  const exercisesRef = collection(db(), "users", userId, "exercises")
   const q = query(exercisesRef, orderBy("order", "asc"))
   const snapshot = await getDocs(q)
   return snapshot.docs.map((doc) => ({
@@ -69,7 +73,7 @@ export async function addExercise(
   userId: string,
   exercise: Omit<Exercise, "id">
 ): Promise<string> {
-  const exercisesRef = collection(db, "users", userId, "exercises")
+  const exercisesRef = collection(db(), "users", userId, "exercises")
   const docRef = await addDoc(exercisesRef, exercise)
   return docRef.id
 }
@@ -79,12 +83,12 @@ export async function updateExercise(
   exerciseId: string,
   data: Partial<Exercise>
 ) {
-  const docRef = doc(db, "users", userId, "exercises", exerciseId)
+  const docRef = doc(db(), "users", userId, "exercises", exerciseId)
   await updateDoc(docRef, data)
 }
 
 export async function deleteExercise(userId: string, exerciseId: string) {
-  const docRef = doc(db, "users", userId, "exercises", exerciseId)
+  const docRef = doc(db(), "users", userId, "exercises", exerciseId)
   await deleteDoc(docRef)
 }
 
@@ -94,7 +98,7 @@ export async function addWorkout(
   userId: string,
   data: WorkoutFormData & { exerciseName: string }
 ): Promise<string> {
-  const workoutsRef = collection(db, "users", userId, "workouts")
+  const workoutsRef = collection(db(), "users", userId, "workouts")
   const volume = data.weightKg * data.reps * data.sets
   const docRef = await addDoc(workoutsRef, {
     exerciseId: data.exerciseId,
@@ -115,7 +119,7 @@ export async function getLatestWorkout(
   userId: string,
   exerciseId: string
 ): Promise<WorkoutLog | null> {
-  const workoutsRef = collection(db, "users", userId, "workouts")
+  const workoutsRef = collection(db(), "users", userId, "workouts")
   const q = query(
     workoutsRef,
     where("exerciseId", "==", exerciseId),
@@ -134,7 +138,7 @@ export async function getWorkouts(
   pageSize = 20,
   lastDoc?: QueryDocumentSnapshot<DocumentData>
 ): Promise<{ workouts: WorkoutLog[]; lastDoc: QueryDocumentSnapshot<DocumentData> | null }> {
-  const workoutsRef = collection(db, "users", userId, "workouts")
+  const workoutsRef = collection(db(), "users", userId, "workouts")
   const constraints: Parameters<typeof query>[1][] = []
 
   if (filters?.exerciseId) {
@@ -175,7 +179,7 @@ export async function getAllWorkouts(
   userId: string,
   filters?: WorkoutFilter
 ): Promise<WorkoutLog[]> {
-  const workoutsRef = collection(db, "users", userId, "workouts")
+  const workoutsRef = collection(db(), "users", userId, "workouts")
   const constraints: Parameters<typeof query>[1][] = []
 
   if (filters?.exerciseId) {
@@ -208,7 +212,7 @@ export async function updateWorkout(
   workoutId: string,
   data: Partial<WorkoutFormData>
 ) {
-  const docRef = doc(db, "users", userId, "workouts", workoutId)
+  const docRef = doc(db(), "users", userId, "workouts", workoutId)
   const updateData: Record<string, unknown> = { ...data }
 
   if (data.weightKg !== undefined && data.reps !== undefined && data.sets !== undefined) {
@@ -219,7 +223,7 @@ export async function updateWorkout(
 }
 
 export async function deleteWorkout(userId: string, workoutId: string) {
-  const docRef = doc(db, "users", userId, "workouts", workoutId)
+  const docRef = doc(db(), "users", userId, "workouts", workoutId)
   await deleteDoc(docRef)
 }
 
@@ -231,7 +235,7 @@ export async function getWorkoutStats(
   dateFrom?: string,
   dateTo?: string
 ) {
-  const workoutsRef = collection(db, "users", userId, "workouts")
+  const workoutsRef = collection(db(), "users", userId, "workouts")
   const constraints: Parameters<typeof query>[1][] = [
     where("exerciseId", "==", exerciseId),
   ]
@@ -259,7 +263,7 @@ export async function getBodyPartStats(
   dateFrom?: string,
   dateTo?: string
 ) {
-  const workoutsRef = collection(db, "users", userId, "workouts")
+  const workoutsRef = collection(db(), "users", userId, "workouts")
   const constraints: Parameters<typeof query>[1][] = []
 
   if (dateFrom) constraints.push(where("date", ">=", dateFrom))
@@ -280,7 +284,7 @@ export async function getWorkoutDates(
   userId: string,
   month: string // YYYY-MM
 ): Promise<string[]> {
-  const workoutsRef = collection(db, "users", userId, "workouts")
+  const workoutsRef = collection(db(), "users", userId, "workouts")
   const q = query(
     workoutsRef,
     where("date", ">=", `${month}-01`),
@@ -302,13 +306,13 @@ export async function addPhoto(
   userId: string,
   data: Omit<BodyPhoto, "id">
 ): Promise<string> {
-  const photosRef = collection(db, "users", userId, "photos")
+  const photosRef = collection(db(), "users", userId, "photos")
   const docRef = await addDoc(photosRef, data)
   return docRef.id
 }
 
 export async function getPhotos(userId: string): Promise<BodyPhoto[]> {
-  const photosRef = collection(db, "users", userId, "photos")
+  const photosRef = collection(db(), "users", userId, "photos")
   const q = query(photosRef, orderBy("createdAt", "desc"))
   const snapshot = await getDocs(q)
   return snapshot.docs.map((doc) => ({
@@ -318,19 +322,19 @@ export async function getPhotos(userId: string): Promise<BodyPhoto[]> {
 }
 
 export async function deletePhotoRecord(userId: string, photoId: string) {
-  const docRef = doc(db, "users", userId, "photos", photoId)
+  const docRef = doc(db(), "users", userId, "photos", photoId)
   await deleteDoc(docRef)
 }
 
 // ── ユーザープロフィール ──
 
 export async function updateUserProfile(userId: string, data: { displayName: string }) {
-  const docRef = doc(db, "users", userId)
+  const docRef = doc(db(), "users", userId)
   await setDoc(docRef, { ...data, updatedAt: Timestamp.now() }, { merge: true })
 }
 
 export async function getUserProfile(userId: string) {
-  const docRef = doc(db, "users", userId)
+  const docRef = doc(db(), "users", userId)
   const snapshot = await getDoc(docRef)
   return snapshot.exists() ? snapshot.data() : null
 }
