@@ -1,16 +1,14 @@
 import { Timestamp } from "firebase/firestore";
 
 // ── 部位 ──
-export type BodyPart = "chest" | "back" | "shoulder" | "arms" | "legs" | "core" | "fullbody";
+export type BodyPart = "chest" | "back" | "shoulder" | "arms" | "legs";
 
 export const BODY_PART_LABELS: Record<BodyPart, string> = {
   chest: "胸",
   back: "背中",
   shoulder: "肩",
-  arms: "腕",
+  arms: "腕（二頭筋・三頭筋・前腕）",
   legs: "脚",
-  core: "体幹",
-  fullbody: "全身",
 };
 
 // ── コンディション ──
