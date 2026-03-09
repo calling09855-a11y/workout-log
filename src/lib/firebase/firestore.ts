@@ -40,6 +40,21 @@ export async function initializeExercises(userId: string) {
   await batch.commit()
 }
 
+export async function resetExercises(userId: string) {
+  const exercisesRef = collection(db, "users", userId, "exercises")
+  const snapshot = await getDocs(exercisesRef)
+
+  // 既存の種目を削除
+  const deleteBatch = writeBatch(db)
+  snapshot.docs.forEach((d) => {
+    deleteBatch.delete(d.ref)
+  })
+  await deleteBatch.commit()
+
+  // 新しい種目を追加
+  await initializeExercises(userId)
+}
+
 export async function getExercises(userId: string): Promise<Exercise[]> {
   const exercisesRef = collection(db, "users", userId, "exercises")
   const q = query(exercisesRef, orderBy("order", "asc"))

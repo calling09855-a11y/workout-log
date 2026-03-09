@@ -8,6 +8,7 @@ import {
   addExercise,
   updateExercise,
   deleteExercise,
+  resetExercises,
   getAllWorkouts,
   updateUserProfile,
 } from "@/lib/firebase/firestore"
@@ -43,7 +44,7 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { useToast } from "@/components/ui/use-toast"
 import { BODY_PART_LABELS, type BodyPart, type Exercise } from "@/lib/types"
-import { Plus, Pencil, Trash2, Download, LogOut } from "lucide-react"
+import { Plus, Pencil, Trash2, Download, LogOut, RefreshCw } from "lucide-react"
 import { format } from "date-fns"
 import { deleteUser } from "firebase/auth"
 
@@ -216,10 +217,29 @@ export default function SettingsPage() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-base">種目管理</CardTitle>
-          <Button variant="outline" size="sm" onClick={handleAddExercise}>
-            <Plus className="h-4 w-4 mr-1" />
-            追加
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={async () => {
+                if (!user) return
+                try {
+                  await resetExercises(user.uid)
+                  refresh()
+                  toast({ title: "種目を初期化しました" })
+                } catch {
+                  toast({ title: "初期化に失敗しました", variant: "destructive" })
+                }
+              }}
+            >
+              <RefreshCw className="h-4 w-4 mr-1" />
+              初期化
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleAddExercise}>
+              <Plus className="h-4 w-4 mr-1" />
+              追加
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-2 max-h-64 overflow-y-auto">
