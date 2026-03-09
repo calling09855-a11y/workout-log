@@ -15,6 +15,7 @@ export function StreakCounter() {
   useEffect(() => {
     if (!user) return
     const calcStreak = async () => {
+      try {
       const workouts = await getAllWorkouts(user.uid)
       const uniqueDates = Array.from(new Set(workouts.map((w) => w.date))).sort().reverse()
 
@@ -62,6 +63,9 @@ export function StreakCounter() {
         }
       }
       setMaxStreak(maxS)
+      } catch {
+        // エラー時はデフォルト値のまま
+      }
     }
     calcStreak()
   }, [user])

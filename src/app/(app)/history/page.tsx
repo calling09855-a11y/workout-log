@@ -63,8 +63,10 @@ export default function HistoryPage() {
       setRecords((prev) => (reset ? filteredWorkouts : [...prev, ...filteredWorkouts]))
       setLastDoc(result.lastDoc)
       setHasMore(result.workouts.length === 20)
-    } catch {
-      toast({ title: "読み込みに失敗しました", variant: "destructive" })
+    } catch (err) {
+      console.error("History fetch error:", err)
+      const msg = err instanceof Error ? err.message : String(err)
+      toast({ title: "読み込みに失敗しました", description: msg, variant: "destructive" })
     } finally {
       setLoading(false)
     }

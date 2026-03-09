@@ -17,14 +17,19 @@ export function MonthlySummary() {
   useEffect(() => {
     if (!user) return
     const fetchStats = async () => {
-      const now = new Date()
-      const from = format(startOfMonth(now), "yyyy-MM-dd")
-      const to = format(endOfMonth(now), "yyyy-MM-dd")
-      const workouts = await getAllWorkouts(user.uid, { dateFrom: from, dateTo: to })
-      const dates = new Set(workouts.map((w) => w.date))
-      setCount(dates.size)
-      setTotalVolume(workouts.reduce((sum, w) => sum + (w.volume || 0), 0))
-      setLoading(false)
+      try {
+        const now = new Date()
+        const from = format(startOfMonth(now), "yyyy-MM-dd")
+        const to = format(endOfMonth(now), "yyyy-MM-dd")
+        const workouts = await getAllWorkouts(user.uid, { dateFrom: from, dateTo: to })
+        const dates = new Set(workouts.map((w) => w.date))
+        setCount(dates.size)
+        setTotalVolume(workouts.reduce((sum, w) => sum + (w.volume || 0), 0))
+      } catch {
+        // エラー時はデフォルト値のまま
+      } finally {
+        setLoading(false)
+      }
     }
     fetchStats()
   }, [user])

@@ -27,9 +27,13 @@ export function TrainingCalendar() {
   useEffect(() => {
     if (!user) return
     const fetchDates = async () => {
-      const month = format(currentMonth, "yyyy-MM")
-      const dates = await getWorkoutDates(user.uid, month)
-      setTrainingDates(dates.map((d) => parseISO(d)))
+      try {
+        const month = format(currentMonth, "yyyy-MM")
+        const dates = await getWorkoutDates(user.uid, month)
+        setTrainingDates(dates.map((d) => parseISO(d)))
+      } catch {
+        // エラー時は空のまま
+      }
     }
     fetchDates()
   }, [user, currentMonth])
@@ -37,12 +41,16 @@ export function TrainingCalendar() {
   const handleDayClick = async (day: Date) => {
     if (!user) return
     setSelectedDate(day)
-    const dateStr = format(day, "yyyy-MM-dd")
-    const workouts = await getAllWorkouts(user.uid, {
-      dateFrom: dateStr,
-      dateTo: dateStr,
-    })
-    setDayRecords(workouts)
+    try {
+      const dateStr = format(day, "yyyy-MM-dd")
+      const workouts = await getAllWorkouts(user.uid, {
+        dateFrom: dateStr,
+        dateTo: dateStr,
+      })
+      setDayRecords(workouts)
+    } catch {
+      setDayRecords([])
+    }
     setIsSheetOpen(true)
   }
 
