@@ -1,11 +1,23 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useAuth } from "@/contexts/AuthContext"
+import { getUserProfile } from "@/lib/firebase/firestore"
 import { Dumbbell, User } from "lucide-react"
 
 export function Header() {
   const { user } = useAuth()
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!user) return
+    getUserProfile(user.uid).then((profile) => {
+      if (profile?.avatarBase64) {
+        setAvatarUrl(profile.avatarBase64)
+      }
+    })
+  }, [user])
 
   return (
     <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -20,9 +32,9 @@ export function Header() {
               {user.displayName || user.email}
             </span>
             <div className="w-8 h-8 rounded-full overflow-hidden bg-muted border border-border flex items-center justify-center">
-              {user.photoURL ? (
+              {avatarUrl ? (
                 <img
-                  src={user.photoURL}
+                  src={avatarUrl}
                   alt=""
                   className="w-full h-full object-cover"
                 />

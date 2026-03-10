@@ -328,7 +328,7 @@ export async function deletePhotoRecord(userId: string, photoId: string) {
 
 // ── ユーザープロフィール ──
 
-export async function updateUserProfile(userId: string, data: { displayName: string }) {
+export async function updateUserProfile(userId: string, data: { displayName?: string; avatarBase64?: string }) {
   const docRef = doc(db(), "users", userId)
   await setDoc(docRef, { ...data, updatedAt: Timestamp.now() }, { merge: true })
 }

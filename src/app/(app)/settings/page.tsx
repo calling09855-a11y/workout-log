@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/AuthContext"
 import { useExercises } from "@/lib/hooks/useExercises"
@@ -11,9 +11,9 @@ import {
   resetExercises,
   getAllWorkouts,
   updateUserProfile,
+  getUserProfile,
 } from "@/lib/firebase/firestore"
 import { updateProfile } from "firebase/auth"
-import { uploadAvatar } from "@/lib/firebase/storage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -60,6 +60,16 @@ export default function SettingsPage() {
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  // Firestoreからアバター読み込み
+  useEffect(() => {
+    if (!user) return
+    getUserProfile(user.uid).then((profile) => {
+      if (profile?.avatarBase64) {
+        setAvatarUrl(profile.avatarBase64)
+      }
+    })
+  }, [user])
+
   // 種目編集ダイアログ
   const [exerciseDialogOpen, setExerciseDialogOpen] = useState(false)
   const [editingExercise, setEditingExercise] = useState<Exercise | null>(null)
@@ -70,14 +80,36 @@ export default function SettingsPage() {
   // アカウント削除
   const [showDeleteAccount, setShowDeleteAccount] = useState(false)
 
+  const resizeAndConvertToBase64 = (file: File, maxWidth: number): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new Image()
+      const url = URL.createObjectURL(file)
+      img.onload = () => {
+        URL.revokeObjectURL(url)
+        const canvas = document.createElement("canvas")
+        let { width, height } = img
+        if (width > maxWidth) {
+          height = (height * maxWidth) / width
+          width = maxWidth
+        }
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext("2d")!
+        ctx.drawImage(img, 0, 0, width, height)
+        resolve(canvas.toDataURL("image/jpeg", 0.7))
+      }
+      img.src = url
+    })
+  }
+
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file || !user) return
     setIsUploadingAvatar(true)
     try {
-      const url = await uploadAvatar(user.uid, file)
-      await updateProfile(user, { photoURL: url })
-      setAvatarUrl(url)
+      const base64 = await resizeAndConvertToBase64(file, 200)
+      await updateUserProfile(user.uid, { avatarBase64: base64 })
+      setAvatarUrl(base64)
       toast({ title: "アイコンを更新しました" })
     } catch {
       toast({ title: "アップロードに失敗しました", variant: "destructive" })
