@@ -12,6 +12,11 @@ export function Header() {
 
   useEffect(() => {
     if (!user) return
+    // まずphotoURL（Firebase Auth）をフォールバックとしてセット
+    if (user.photoURL) {
+      setAvatarUrl(user.photoURL)
+    }
+    // FirestoreのBase64があればそちらを優先
     getUserProfile(user.uid).then((profile) => {
       if (profile?.avatarBase64) {
         setAvatarUrl(profile.avatarBase64)
