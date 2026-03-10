@@ -338,3 +338,41 @@ export async function getUserProfile(userId: string) {
   const snapshot = await getDoc(docRef)
   return snapshot.exists() ? snapshot.data() : null
 }
+
+// ── 食事記録 ──
+
+export async function addMeal(
+  userId: string,
+  data: { date: string; mealType: string; description: string; calories?: number; protein?: number; memo?: string }
+) {
+  const colRef = collection(db(), "users", userId, "meals")
+  const docRef = await addDoc(colRef, {
+    ...data,
+    createdAt: Timestamp.now(),
+  })
+  return docRef.id
+}
+
+export async function getMealsByDate(userId: string, date: string) {
+  const colRef = collection(db(), "users", userId, "meals")
+  const q = query(colRef, where("date", "==", date), orderBy("createdAt", "asc"))
+  const snapshot = await getDocs(q)
+  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }))
+}
+
+export async function getMealsForRange(userId: string, startDate: string, endDate: string) {
+  const colRef = collection(db(), "users", userId, "meals")
+  const q = query(
+    colRef,
+    where("date", ">=", startDate),
+    where("date", "<=", endDate),
+    orderBy("date", "desc"),
+  )
+  const snapshot = await getDocs(q)
+  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }))
+}
+
+export async function deleteMeal(userId: string, mealId: string) {
+  const docRef = doc(db(), "users", userId, "meals", mealId)
+  await deleteDoc(docRef)
+}

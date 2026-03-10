@@ -81,6 +81,35 @@ export interface BodyPhoto {
   createdAt: Timestamp;
 }
 
+// ── 食事タイプ ──
+export type MealType = "breakfast" | "lunch" | "dinner" | "snack";
+
+export const MEAL_TYPE_LABELS: Record<MealType, string> = {
+  breakfast: "朝食",
+  lunch: "昼食",
+  dinner: "夕食",
+  snack: "間食",
+};
+
+export const MEAL_TYPE_EMOJI: Record<MealType, string> = {
+  breakfast: "🌅",
+  lunch: "☀️",
+  dinner: "🌙",
+  snack: "🍎",
+};
+
+// ── 食事記録 ──
+export interface MealLog {
+  id: string;
+  date: string; // YYYY-MM-DD
+  mealType: MealType;
+  description: string; // 食事内容（自由入力）
+  calories?: number; // カロリー（任意）
+  protein?: number; // タンパク質g（任意）
+  memo?: string;
+  createdAt: Timestamp;
+}
+
 // ── 統計データ ──
 export interface WorkoutStats {
   exerciseId: string;
