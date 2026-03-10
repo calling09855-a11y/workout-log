@@ -34,6 +34,27 @@ export async function uploadPhoto(
   })
 }
 
+export async function uploadAvatar(
+  userId: string,
+  file: File
+): Promise<string> {
+  const resizedFile = await resizeImage(file, 256)
+  const storageRef = ref(getStorageInstance(), `users/${userId}/avatar.jpg`)
+
+  return new Promise((resolve, reject) => {
+    const uploadTask = uploadBytesResumable(storageRef, resizedFile)
+    uploadTask.on(
+      "state_changed",
+      null,
+      (error) => reject(error),
+      async () => {
+        const url = await getDownloadURL(uploadTask.snapshot.ref)
+        resolve(url)
+      }
+    )
+  })
+}
+
 export async function deletePhoto(userId: string, fileName: string) {
   const storageRef = ref(getStorageInstance(), `users/${userId}/photos/${fileName}`)
   await deleteObject(storageRef)

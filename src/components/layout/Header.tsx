@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useAuth } from "@/contexts/AuthContext"
-import { Dumbbell } from "lucide-react"
+import { Dumbbell, User } from "lucide-react"
 
 export function Header() {
   const { user } = useAuth()
@@ -15,9 +15,22 @@ export function Header() {
           WorkoutLog
         </Link>
         {user && (
-          <span className="text-sm text-muted-foreground">
-            {user.displayName || user.email}
-          </span>
+          <Link href="/settings" className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">
+              {user.displayName || user.email}
+            </span>
+            <div className="w-8 h-8 rounded-full overflow-hidden bg-muted border border-border flex items-center justify-center">
+              {user.photoURL ? (
+                <img
+                  src={user.photoURL}
+                  alt=""
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <User className="w-4 h-4 text-muted-foreground" />
+              )}
+            </div>
+          </Link>
         )}
       </div>
     </header>

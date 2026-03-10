@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/AuthContext"
 import { useExercises } from "@/lib/hooks/useExercises"
@@ -13,6 +13,7 @@ import {
   updateUserProfile,
 } from "@/lib/firebase/firestore"
 import { updateProfile } from "firebase/auth"
+import { uploadAvatar } from "@/lib/firebase/storage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -44,7 +45,7 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { useToast } from "@/components/ui/use-toast"
 import { BODY_PART_LABELS, type BodyPart, type Exercise } from "@/lib/types"
-import { Plus, Pencil, Trash2, Download, LogOut, RefreshCw } from "lucide-react"
+import { Plus, Pencil, Trash2, Download, LogOut, RefreshCw, Camera, User } from "lucide-react"
 import { format } from "date-fns"
 import { deleteUser } from "firebase/auth"
 
@@ -55,6 +56,9 @@ export default function SettingsPage() {
   const router = useRouter()
   const [displayName, setDisplayName] = useState(user?.displayName || "")
   const [isSavingProfile, setIsSavingProfile] = useState(false)
+  const [avatarUrl, setAvatarUrl] = useState(user?.photoURL || "")
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // 種目編集ダイアログ
   const [exerciseDialogOpen, setExerciseDialogOpen] = useState(false)
@@ -65,6 +69,22 @@ export default function SettingsPage() {
 
   // アカウント削除
   const [showDeleteAccount, setShowDeleteAccount] = useState(false)
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !user) return
+    setIsUploadingAvatar(true)
+    try {
+      const url = await uploadAvatar(user.uid, file)
+      await updateProfile(user, { photoURL: url })
+      setAvatarUrl(url)
+      toast({ title: "アイコンを更新しました" })
+    } catch {
+      toast({ title: "アップロードに失敗しました", variant: "destructive" })
+    } finally {
+      setIsUploadingAvatar(false)
+    }
+  }
 
   const handleSaveProfile = async () => {
     if (!user) return
@@ -195,7 +215,45 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle className="text-base">プロフィール</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-4">
+          {/* アバター */}
+          <div className="flex flex-col items-center gap-3">
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploadingAvatar}
+              className="relative group"
+            >
+              <div className="w-24 h-24 rounded-full overflow-hidden bg-muted border-2 border-border flex items-center justify-center">
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt="アバター"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <User className="w-10 h-10 text-muted-foreground" />
+                )}
+              </div>
+              <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <Camera className="w-6 h-6 text-white" />
+              </div>
+              {isUploadingAvatar && (
+                <div className="absolute inset-0 rounded-full bg-black/60 flex items-center justify-center">
+                  <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                </div>
+              )}
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleAvatarChange}
+              className="hidden"
+            />
+            <p className="text-xs text-muted-foreground">タップしてアイコンを変更</p>
+          </div>
+
           <div className="space-y-2">
             <Label>表示名</Label>
             <Input
