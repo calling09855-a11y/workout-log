@@ -1,9 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import Anthropic from "@anthropic-ai/sdk"
-
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY || "",
-})
+import { GoogleGenerativeAI } from "@google/generative-ai"
 
 const SYSTEM_PROMPT = `あなたはトレーニングの専門家AIアシスタント「WorkoutLog AI」です。
 ユーザーの筋トレ・フィットネスに関する質問に日本語で回答してください。
@@ -26,39 +22,31 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "メッセージが必要です" }, { status: 400 })
     }
 
-    if (!process.env.ANTHROPIC_API_KEY) {
+    if (!process.env.GEMINI_API_KEY) {
       return NextResponse.json(
-        { error: "ANTHROPIC_API_KEY が設定されていません" },
+        { error: "GEMINI_API_KEY が設定されていません" },
         { status: 500 }
       )
     }
 
-    const messages = [
-      ...(history || []).map((h: { role: string; content: string }) => ({
-        role: h.role as "user" | "assistant",
-        content: h.content,
-      })),
-      { role: "user" as const, content: message },
-    ]
-
-    const response = await anthropic.messages.create({
-      model: "claude-opus-4-6",
-      max_tokens: 1024,
-      system: SYSTEM_PROMPT,
-      messages,
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.0-flash",
+      systemInstruction: SYSTEM_PROMPT,
     })
 
-    const text = response.content
-      .filter((block) => block.type === "text")
-      .map((block) => {
-        if (block.type === "text") return block.text
-        return ""
-      })
-      .join("")
+    const chatHistory = (history || []).map((h: { role: string; content: string }) => ({
+      role: h.role === "assistant" ? "model" : "user",
+      parts: [{ text: h.content }],
+    }))
+
+    const chat = model.startChat({ history: chatHistory })
+    const result = await chat.sendMessage(message)
+    const text = result.response.text()
 
     return NextResponse.json({ response: text })
   } catch (error) {
-    console.error("Claude API error:", error)
+    console.error("Gemini API error:", error)
     return NextResponse.json(
       { error: "AIの応答でエラーが発生しました" },
       { status: 500 }
