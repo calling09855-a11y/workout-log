@@ -47,8 +47,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ response: text })
   } catch (error) {
     console.error("Gemini API error:", error)
+    const message = error instanceof Error ? error.message : "不明なエラー"
     return NextResponse.json(
-      { error: "AIの応答でエラーが発生しました" },
+      { error: `AIの応答でエラーが発生しました: ${message}` },
       { status: 500 }
     )
   }
