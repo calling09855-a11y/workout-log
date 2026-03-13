@@ -355,19 +355,14 @@ export async function addMeal(
 
 export async function getMealsByDate(userId: string, date: string) {
   const colRef = collection(db(), "users", userId, "meals")
-  const q = query(colRef, where("date", "==", date), orderBy("createdAt", "asc"))
+  const q = query(colRef, where("date", "==", date))
   const snapshot = await getDocs(q)
   return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }))
 }
 
 export async function getMealsForRange(userId: string, startDate: string, endDate: string) {
   const colRef = collection(db(), "users", userId, "meals")
-  const q = query(
-    colRef,
-    where("date", ">=", startDate),
-    where("date", "<=", endDate),
-    orderBy("date", "desc"),
-  )
+  const q = query(colRef, where("date", ">=", startDate), where("date", "<=", endDate))
   const snapshot = await getDocs(q)
   return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }))
 }
